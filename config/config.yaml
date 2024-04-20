@@ -1,0 +1,13 @@
+port: 8080
+
+auth:
+  hash_salt: "sesc_salt"
+  sign_key: "sesc_key"
+  token_ttl: 86400
+
+mongo:
+  uri: "mongodb://mongodb:27017"
+  db_name: "UserDB"
+  user_collection: "users"
+  student_collection: "students"
+  course_collection: "courses"
