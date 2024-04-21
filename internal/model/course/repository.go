@@ -90,3 +90,10 @@ func toCourse(c *MongoCourse) *Course {
 		Name: c.Name,
 	}
 }
+
+// TEST FUNCTIONS
+func CreateTestRepo(courseCol *mongo.Collection) *CourseRepository {
+	return &CourseRepository{
+		db: courseCol,
+	}
+}

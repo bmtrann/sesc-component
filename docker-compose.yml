@@ -13,6 +13,7 @@ services:
     command: /server/app
     environment:
       - FINANCE_URL=http://financeapp:8082
+      - LIBRARY_URL=http://libraryapp:80
     depends_on:
       - mongodb
     networks:

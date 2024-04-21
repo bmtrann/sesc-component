@@ -1,6 +1,7 @@
 package enrolment
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/bmtrann/sesc-component/config"
@@ -117,6 +118,12 @@ func (handler *EnrolmentHandler) Enrol(c *gin.Context) {
 			c.JSON(http.StatusServiceUnavailable, response)
 			return
 		}
+
+		if err := createLibraryAccount(studentId); err != nil {
+			// Not throw since Create Invoice is more important
+			log.Println(err)
+			response.ServiceMessage = err.Error()
+		}
 	} else {
 		err := handler.studentRepo.AddCourseToStudent(c.Request.Context(), studentId, course)
 
@@ -132,7 +139,7 @@ func (handler *EnrolmentHandler) Enrol(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusAccepted, response)
 }
 
 func createFinanceAccount(studentId string) error {
@@ -141,4 +148,8 @@ func createFinanceAccount(studentId string) error {
 
 func createInvoice(studentId string, fees float32) error {
 	return service.GetInstance().CreateInvoice(studentId, fees)
+}
+
+func createLibraryAccount(studentId string) error {
+	return service.GetInstance().CreateLibraryAccount(studentId)
 }

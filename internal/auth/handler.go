@@ -107,7 +107,7 @@ func (handler *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	c.Status(http.StatusOK)
+	c.Status(http.StatusCreated)
 }
 
 func (handler *AuthHandler) register(ctx context.Context, payload *Payload) error {

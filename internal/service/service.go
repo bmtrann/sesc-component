@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -18,6 +19,10 @@ type FinanceService interface {
 	GetGraduationStatus()
 }
 
+type LibraryService interface {
+	CreateLibraryAccount()
+}
+
 type InvoicePayload struct {
 	Amount  float32 `json:"amount"`
 	DueDate string  `json:"dueDate"`
@@ -30,6 +35,10 @@ type Account struct {
 }
 
 type ServiceHandler struct{}
+
+// Constants
+var FINANCE_URL string = os.Getenv("FINANCE_URL")
+var LIBRARY_URL string = os.Getenv("LIBRARY_URL")
 
 // Singleton pattern
 var (
@@ -49,38 +58,80 @@ func (handler *ServiceHandler) CreateFinanceAccount(studentId string) error {
 		"studentId": studentId,
 	})
 
-	return postRequest(payload, "/accounts")
+	return postRequest(payload, FINANCE_URL+"/accounts")
 }
 
 func (handler *ServiceHandler) CreateInvoice(studentId string, fees float32) error {
 	payload, _ := json.Marshal(InvoicePayload{
 		Amount:  fees,
-		DueDate: time.Now().AddDate(0, 1, 0).String(),
+		DueDate: time.Now().AddDate(0, 1, 0).Format("2006-01-02"),
 		Type:    "TUITION_FEES",
 		Account: Account{
 			StudentID: studentId,
 		},
 	})
 
-	return postRequest(payload, "/invoices")
+	return postRequest(payload, FINANCE_URL+"/invoices")
 }
 
-func postRequest(payload []byte, endpoint string) error {
-	body := bytes.NewBuffer(payload)
-	financeURL := os.Getenv("FINANCE_URL")
+func (handler *ServiceHandler) GetGraduationStatus(studentId string) (bool, error) {
+	url := FINANCE_URL + "/accounts/student/" + studentId
+	response, err := getRequest(url)
 
-	resp, err := http.Post(financeURL+endpoint, "application/json", body)
+	if err != nil {
+		return false, err
+	}
+
+	hasOutstandingBalance, ok := response["hasOutstandingBalance"].(bool)
+	if !ok {
+		return false, exception.ServiceException(url)
+	}
+
+	return hasOutstandingBalance, nil
+}
+
+func (handler *ServiceHandler) CreateLibraryAccount(studentId string) error {
+	payload, _ := json.Marshal(map[string]string{
+		"studentId": studentId,
+	})
+
+	return postRequest(payload, LIBRARY_URL+"/api/register")
+}
+
+func postRequest(payload []byte, url string) error {
+	body := bytes.NewBuffer(payload)
+
+	resp, err := http.Post(url, "application/json", body)
 
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	if resp.StatusCode != 201 {
+	if resp.StatusCode != 200 && resp.StatusCode != 201 {
 		log.Println(resp.StatusCode)
-		return exception.ServiceException(financeURL + endpoint)
+		return exception.ServiceException(url)
 	}
 	defer resp.Body.Close()
 
 	return nil
+}
+
+func getRequest(url string) (map[string]interface{}, error) {
+	resp, err := http.Get(url)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	respBody, _ := io.ReadAll(resp.Body)
+
+	var data map[string]interface{}
+	if err := json.Unmarshal(respBody, &data); err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return data, nil
 }
