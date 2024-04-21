@@ -8,7 +8,7 @@ func AddRoutes(router *gin.Engine, handler *ProfileHandler) {
 	routes := router.Group("/profile")
 	{
 		routes.GET("/:id", handler.GetProfile)
-		router.GET("/:id/graduation-status", handler.GetGraduationStatus)
-		router.POST("/update", handler.UpdateProfile)
+		routes.GET("/:id/graduation-status", handler.GetGraduationStatus)
+		routes.POST("/update", handler.UpdateProfile)
 	}
 }

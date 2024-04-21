@@ -75,8 +75,8 @@ func (r *StudentRepository) UpdateStudentProfile(ctx context.Context, studentId 
 	return nil
 }
 
-func (r *StudentRepository) AddCourseToStudent(ctx context.Context, accountId string, course *model.Course) error {
-	filter := bson.M{"account_id": accountId}
+func (r *StudentRepository) AddCourseToStudent(ctx context.Context, studentId string, course *model.Course) error {
+	filter := bson.M{"student_id": studentId}
 	update := bson.M{"$push": bson.M{"courses": course}}
 
 	result, err := r.db.UpdateOne(ctx, filter, update)

@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/bmtrann/sesc-component/config"
-	"github.com/bmtrann/sesc-component/internal/exception"
 	courseModel "github.com/bmtrann/sesc-component/internal/model/course"
 	studentModel "github.com/bmtrann/sesc-component/internal/model/student"
+	"github.com/bmtrann/sesc-component/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -28,11 +28,13 @@ type ListResponse struct {
 }
 
 type EnrolResponse struct {
-	Student studentModel.Student
+	Student        studentModel.Student
+	ServiceMessage string
 }
 
 type Payload struct {
 	AccountId  string `json:"accountId"`
+	StudentId  string `json:"studentId"`
 	CourseName string `json:"courseName"`
 }
 
@@ -82,31 +84,61 @@ func (handler *EnrolmentHandler) Enrol(c *gin.Context) {
 		return
 	}
 
-	course, _, courseErr := handler.courseRepo.FindCourse(c.Request.Context(), payload.CourseName)
+	course, courseView, courseErr := handler.courseRepo.FindCourse(c.Request.Context(), payload.CourseName)
 
 	if courseErr != nil {
-		c.AbortWithStatus(http.StatusNotFound)
+		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
-	err := handler.studentRepo.AddCourseToStudent(c.Request.Context(), payload.AccountId, course)
+	studentId := payload.StudentId
+	response := new(EnrolResponse)
 
-	if err != nil {
-		if err == exception.ErrUserNotFound {
-			id := uuid.New()
+	if studentId == "" {
+		id := uuid.New()
+		studentId = id.String()[:8]
 
-			record := studentModel.MongoStudent{
-				AccountId: payload.AccountId,
-				StudentId: id.String()[:8],
-				Courses:   []courseModel.Course{*course},
-			}
-
-			student, _ := handler.studentRepo.CreateStudent(c.Request.Context(), &record)
-			c.JSON(http.StatusOK, EnrolResponse{Student: *student})
+		record := studentModel.MongoStudent{
+			AccountId: payload.AccountId,
+			StudentId: studentId,
+			Courses:   []courseModel.Course{*course},
 		}
-		c.AbortWithStatus(http.StatusInternalServerError)
+
+		result, dbErr := handler.studentRepo.CreateStudent(c.Request.Context(), &record)
+		response.Student = *result
+
+		if dbErr != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+
+		if err := createFinanceAccount(studentId); err != nil {
+			response.ServiceMessage = err.Error()
+			c.JSON(http.StatusServiceUnavailable, response)
+			return
+		}
+	} else {
+		err := handler.studentRepo.AddCourseToStudent(c.Request.Context(), studentId, course)
+
+		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if err := createInvoice(studentId, courseView.Fees); err != nil {
+		response.ServiceMessage = err.Error()
+		c.JSON(http.StatusServiceUnavailable, response)
 		return
 	}
 
-	c.Status(http.StatusOK)
+	c.JSON(http.StatusOK, response)
+}
+
+func createFinanceAccount(studentId string) error {
+	return service.GetInstance().CreateFinanceAccount(studentId)
+}
+
+func createInvoice(studentId string, fees float32) error {
+	return service.GetInstance().CreateInvoice(studentId, fees)
 }

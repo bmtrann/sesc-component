@@ -1,12 +1,22 @@
 version: '3'
+
+networks:
+  default:
+    external: true
+    name: finance_default
+
 services:
   student:
     build: .
     ports:
       - "8080:8080"
     command: /server/app
+    environment:
+      - FINANCE_URL=http://financeapp:8082
     depends_on:
       - mongodb
+    networks:
+      - default
 
   mongodb:
     image: mongo:latest
@@ -19,6 +29,8 @@ services:
       - ./.data/db:/data/db
     ports:
       - 27017:27017
+    networks:
+      - default
 
   mongo-express:
     image: mongo-express:latest
@@ -27,3 +39,5 @@ services:
       - "8081:8081"
     environment:
       - ME_CONFIG_MONGODB_SERVER=mongodb
+    networks:
+      - default
