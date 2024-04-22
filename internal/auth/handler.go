@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha1"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -82,7 +83,7 @@ func (handler *AuthHandler) login(ctx context.Context, username, password string
 	claims := authClaims{
 		user,
 		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(handler.config.TokenTTL)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().AddDate(0, 0, 1)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
@@ -121,4 +122,24 @@ func (handler *AuthHandler) register(ctx context.Context, payload *Payload) erro
 	}
 
 	return handler.userRepo.CreateUser(ctx, user)
+}
+
+func (handler *AuthHandler) ParseToken(ctx context.Context, accessToken string) (*model.User, error) {
+	token, err := jwt.ParseWithClaims(accessToken, &authClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return handler.config.SignKey, nil
+	})
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	if claims, ok := token.Claims.(*authClaims); ok && token.Valid {
+		return claims.User, nil
+	}
+
+	return nil, exception.ErrInvalidAccessToken
 }

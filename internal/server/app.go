@@ -7,6 +7,7 @@ import (
 	"github.com/bmtrann/sesc-component/internal/auth"
 	database "github.com/bmtrann/sesc-component/internal/db"
 	"github.com/bmtrann/sesc-component/internal/enrolment"
+	"github.com/bmtrann/sesc-component/internal/middleware"
 	"github.com/bmtrann/sesc-component/internal/profile"
 	"github.com/gin-gonic/gin"
 )
@@ -27,13 +28,15 @@ func InitApp() {
 	authHandler := auth.InitAuthHandler(authConfig, db, dbConfig.UserCollection)
 	auth.AddRoutes(router, authHandler)
 
+	middleware := middleware.NewMiddlewareHandler(authHandler)
+
 	// add Enrolment endpoints
 	enrolmentHandler := enrolment.InitEnrolmentHandler(db, dbConfig)
-	enrolment.AddRoutes(router, enrolmentHandler)
+	enrolment.AddRoutes(router, enrolmentHandler, middleware)
 
 	// add Profile endpoints
 	profileHandler := profile.InitProfileHandler(db, dbConfig.StudentCollection)
-	profile.AddRoutes(router, profileHandler)
+	profile.AddRoutes(router, profileHandler, middleware)
 
 	router.Run()
 }
