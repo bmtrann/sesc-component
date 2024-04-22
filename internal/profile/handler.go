@@ -83,7 +83,7 @@ func (handler *ProfileHandler) UpdateProfile(c *gin.Context) {
 func (handler *ProfileHandler) GetGraduationStatus(c *gin.Context) {
 	studentId := c.Param("id")
 
-	status, err := service.GetInstance().GetGraduationStatus(studentId)
+	status, err := service.GetGraduationStatus(studentId)
 	if err != nil {
 		c.JSON(http.StatusServiceUnavailable, map[string]string{
 			"error": err.Error(),

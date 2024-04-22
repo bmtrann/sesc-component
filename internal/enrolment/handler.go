@@ -143,13 +143,13 @@ func (handler *EnrolmentHandler) Enrol(c *gin.Context) {
 }
 
 func createFinanceAccount(studentId string) error {
-	return service.GetInstance().CreateFinanceAccount(studentId)
+	return service.CreateFinanceAccount(studentId)
 }
 
 func createInvoice(studentId string, fees float32) error {
-	return service.GetInstance().CreateInvoice(studentId, fees)
+	return service.CreateInvoice(studentId, fees)
 }
 
 func createLibraryAccount(studentId string) error {
-	return service.GetInstance().CreateLibraryAccount(studentId)
+	return service.CreateLibraryAccount(studentId)
 }

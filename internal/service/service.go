@@ -7,21 +7,10 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/bmtrann/sesc-component/internal/exception"
 )
-
-type FinanceService interface {
-	CreateFinanceAccount()
-	CreateInvoice()
-	GetGraduationStatus()
-}
-
-type LibraryService interface {
-	CreateLibraryAccount()
-}
 
 type InvoicePayload struct {
 	Amount  float32 `json:"amount"`
@@ -34,26 +23,11 @@ type Account struct {
 	StudentID string `json:"studentId"`
 }
 
-type ServiceHandler struct{}
-
 // Constants
 var FINANCE_URL string = os.Getenv("FINANCE_URL")
 var LIBRARY_URL string = os.Getenv("LIBRARY_URL")
 
-// Singleton pattern
-var (
-	handler *ServiceHandler
-	once    sync.Once
-)
-
-func GetInstance() *ServiceHandler {
-	once.Do(func() {
-		handler = &ServiceHandler{}
-	})
-	return handler
-}
-
-func (handler *ServiceHandler) CreateFinanceAccount(studentId string) error {
+func CreateFinanceAccount(studentId string) error {
 	payload, _ := json.Marshal(map[string]string{
 		"studentId": studentId,
 	})
@@ -61,7 +35,7 @@ func (handler *ServiceHandler) CreateFinanceAccount(studentId string) error {
 	return postRequest(payload, FINANCE_URL+"/accounts")
 }
 
-func (handler *ServiceHandler) CreateInvoice(studentId string, fees float32) error {
+func CreateInvoice(studentId string, fees float32) error {
 	payload, _ := json.Marshal(InvoicePayload{
 		Amount:  fees,
 		DueDate: time.Now().AddDate(0, 1, 0).Format("2006-01-02"),
@@ -74,7 +48,7 @@ func (handler *ServiceHandler) CreateInvoice(studentId string, fees float32) err
 	return postRequest(payload, FINANCE_URL+"/invoices")
 }
 
-func (handler *ServiceHandler) GetGraduationStatus(studentId string) (bool, error) {
+func GetGraduationStatus(studentId string) (bool, error) {
 	url := FINANCE_URL + "/accounts/student/" + studentId
 	response, err := getRequest(url)
 
@@ -90,7 +64,7 @@ func (handler *ServiceHandler) GetGraduationStatus(studentId string) (bool, erro
 	return hasOutstandingBalance, nil
 }
 
-func (handler *ServiceHandler) CreateLibraryAccount(studentId string) error {
+func CreateLibraryAccount(studentId string) error {
 	payload, _ := json.Marshal(map[string]string{
 		"studentId": studentId,
 	})
