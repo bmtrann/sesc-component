@@ -8,6 +8,7 @@ import (
 	model "github.com/bmtrann/sesc-component/internal/model/course"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type StudentRepository struct {
@@ -15,8 +16,20 @@ type StudentRepository struct {
 }
 
 func NewStudentRepository(db *mongo.Database, collection string) *StudentRepository {
+	studentCol := db.Collection(collection)
+
+	indexModel := mongo.IndexModel{
+		Keys:    bson.M{"accountId": 1},
+		Options: options.Index().SetUnique(true),
+	}
+
+	_, err := studentCol.Indexes().CreateOne(context.TODO(), indexModel)
+	if err != nil {
+		panic(err)
+	}
+
 	return &StudentRepository{
-		db: db.Collection(collection),
+		db: studentCol,
 	}
 }
 

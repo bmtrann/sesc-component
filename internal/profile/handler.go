@@ -63,7 +63,7 @@ func (handler *ProfileHandler) UpdateProfile(c *gin.Context) {
 	}
 
 	if payload.Surname != "" {
-		data["surname"] = payload.FirstName
+		data["surname"] = payload.Surname
 	}
 
 	err := handler.studentRepo.UpdateStudentProfile(c.Request.Context(), payload.StudentId, data)
