@@ -2,6 +2,7 @@ package auth_test
 
 import (
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -31,7 +32,10 @@ func TestAuthServiceRegister(t *testing.T) {
 	})
 	handler := auth.InitAuthHandler(authConfig, database, "users")
 
-	c.Request.Header.Set("API-Key", "ADMIN-KEY-PASS")
+	req := httptest.NewRequest(http.MethodPost, "/auth/register", nil)
+	req.Header.Set("API-Key", "ADMIN-KEY-PASS")
+	c.Request = req
+
 	payload := Payload{
 		Username: "test@c123456",
 		Password: "test@123!",
