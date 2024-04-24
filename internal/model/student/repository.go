@@ -19,7 +19,7 @@ func NewStudentRepository(db *mongo.Database, collection string) *StudentReposit
 	studentCol := db.Collection(collection)
 
 	indexModel := mongo.IndexModel{
-		Keys:    bson.M{"accountId": 1},
+		Keys:    bson.M{"account_id": 1},
 		Options: options.Index().SetUnique(true),
 	}
 
