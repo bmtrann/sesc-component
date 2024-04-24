@@ -17,7 +17,7 @@ type CourseView struct {
 
 type MongoCourse struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty"`
-	Name        string             `bson:"name" validate:"required"`
+	Name        string             `bson:"name"`
 	Description string             `bson:"description"`
-	Fees        float32            `bson:"fees" validate:"required"`
+	Fees        float32            `bson:"fees"`
 }
