@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/bmtrann/sesc-component/config"
@@ -98,6 +99,12 @@ func (handler *AuthHandler) Register(c *gin.Context) {
 
 	if err := c.BindJSON(payload); err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	authHeader := c.GetHeader("API-Key")
+	if authHeader == "" || authHeader != os.Getenv("API_KEY") {
+		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 

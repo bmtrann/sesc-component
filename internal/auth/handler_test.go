@@ -31,10 +31,12 @@ func TestAuthServiceRegister(t *testing.T) {
 	})
 	handler := auth.InitAuthHandler(authConfig, database, "users")
 
+	c.Request.Header.Set("API-Key", "ADMIN-KEY-PASS")
 	payload := Payload{
 		Username: "test@c123456",
 		Password: "test@123!",
 	}
+
 	jsonPayload, _ := json.Marshal(payload)
 	w.Write(jsonPayload)
 

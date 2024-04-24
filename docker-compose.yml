@@ -14,6 +14,7 @@ services:
     environment:
       - FINANCE_URL=http://financeapp:8082
       - LIBRARY_URL=http://libraryapp:80
+      - API_KEY=ADMIN-KEY-PASS
     depends_on:
       - mongodb
     networks:
