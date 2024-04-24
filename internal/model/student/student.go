@@ -14,9 +14,9 @@ type Student struct {
 
 type MongoStudent struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty"`
-	AccountId string             `bson:"account_id"`
+	AccountId string             `bson:"account_id" validate:"required"`
 	FirstName string             `bson:"first_name"`
 	Surname   string             `bson:"surname"`
-	StudentId string             `bson:"student_id"`
+	StudentId string             `bson:"student_id" validate:"required"`
 	Courses   []model.Course     `bson:"courses"`
 }
